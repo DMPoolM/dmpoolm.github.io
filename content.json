@@ -1,0 +1,88 @@
+{
+  "name": "Fanze Meng",
+  "github": "https://github.com/DMPoolM",
+  "linkedin": "https://www.linkedin.com/in/fanze-meng-b3b240206/",
+  "email": "meng.f.0621@m.isct.ac.jp",
+  "url": "https://dmpoolm.github.io",
+  "updated": "November 2026",
+  "intro": "I’m an MSc student at Institute of Science Tokyo, working on computational materials in the Tateyama–Ando Lab. My work connects materials science, machine learning, and software for industrial R&D.",
+  "projects": [
+    {
+      "slug": "material-centre",
+      "number": "01",
+      "title": "Material Centre",
+      "subtitle": "Making materials data easier to explore.",
+      "category": "Research software",
+      "context": "Volvo Cars · Materials & AI internship",
+      "date": "Feb 2025 – Jan 2026",
+      "summary": "An interactive materials-search application that connects a target property profile with similar polymer grades.",
+      "tags": ["Python", "Streamlit", "scikit-learn", "Docker"],
+      "result": "Deployed on Volvo’s internal ML platform for user testing and feedback.",
+      "problem": "Materials selection involves comparing property profiles across many candidate grades. The goal was to give engineers an interactive way to explore materials data and find similar candidates.",
+      "contribution": "I designed and developed Material Centre, built its similarity-search workflow, and containerised the application for deployment on Volvo’s internal ML platform.",
+      "methods": ["Built an interactive interface with Streamlit and Plotly for exploring property data.", "Used principal component analysis and distance metrics to rank similar materials against a target property profile.", "Returned the five closest grades and supported comparison of available materials properties and stress–strain curves."],
+      "outcome": "The application was deployed for internal user testing and feedback. This case study describes the workflow at a high level; the internal application, source code, and industrial datasets are not hosted here.",
+      "figure_caption": "Conceptual search workflow. This is an original schematic, not a screenshot of the internal application."
+    },
+    {
+      "slug": "stress-strain-prediction",
+      "number": "02",
+      "title": "From microstructure to mechanical response",
+      "subtitle": "Learning stress–strain behaviour from images.",
+      "category": "Materials machine learning",
+      "context": "Volvo Cars · Materials & AI internship",
+      "date": "Feb 2025 – Jan 2026",
+      "summary": "CNN–Transformer models for stress–strain prediction, with uncertainty estimates and a physics-informed variant.",
+      "tags": ["PyTorch", "CNNs", "Transformers", "Uncertainty"],
+      "result": "Validation R² = 0.89 on a dataset built from 90 representative volume elements.",
+      "problem": "Microstructure contains information about a material’s mechanical response. This project explored learning a mapping from microstructure images to tensile stress–strain curves, together with an estimate of predictive uncertainty.",
+      "contribution": "I designed and developed the prediction models, implemented Monte Carlo dropout for uncertainty estimation, and added a physics-informed model variant.",
+      "methods": ["Combined a ResNet-101 backbone, spatial attention, and a Transformer encoder in PyTorch.", "Estimated uncertainty with Monte Carlo dropout.", "Added elastic-modulus, smoothness, and boundary-condition losses in a physics-informed variant."],
+      "outcome": "The model achieved a validation R² of 0.89. This is a validation result rather than a claim of performance on an independent external dataset. The public overview does not include the industrial training data, measured curves, or model weights.",
+      "figure_caption": "Conceptual model pipeline. The curve is illustrative and does not represent measured data or a model prediction."
+    },
+    {
+      "slug": "structure-screening",
+      "number": "03",
+      "title": "A smaller set of structures to inspect",
+      "subtitle": "Graph similarity for 3D electron diffraction.",
+      "category": "Scientific data analysis",
+      "context": "Tohoku University · COLABS research exchange",
+      "date": "Sep 2024 – Feb 2025",
+      "summary": "Clustering crystal-structure candidates to reduce the number requiring manual verification.",
+      "tags": ["Graph similarity", "RDKit", "Clustering", "3D ED"],
+      "result": "97.2% average reduction in candidates requiring manual verification across seven datasets.",
+      "problem": "Structure solutions from 3D electron diffraction can produce many related candidates. Inspecting each candidate separately creates substantial manual work.",
+      "contribution": "I built a graph-similarity clustering pipeline for structure candidates and evaluated it across seven experimental datasets containing 2,127 structures.",
+      "methods": ["Represented candidate structures as graphs and compared structural similarity.", "Grouped related candidates to reduce the number requiring manual verification.", "Also compared Morgan-fingerprint classifiers, including SVM and XGBoost, with a best cross-validated accuracy of 88.7%."],
+      "outcome": "The clustering workflow reduced the number of structures requiring manual verification by 97.2% on average. This measures a reduction in review workload; it is not a structure-identification accuracy or a guarantee that every correct structure is retained.",
+      "figure_caption": "Conceptual grouping of related structure candidates. Point counts and positions are schematic, not experimental results."
+    },
+    {
+      "slug": "robot-code-agent",
+      "number": "04",
+      "title": "An LLM agent for industrial robot code",
+      "subtitle": "Connecting technical manuals and code validation.",
+      "category": "Generative AI · MSc thesis",
+      "context": "Chalmers University of Technology × Volvo Cars",
+      "date": "Oct 2025 – Jun 2026",
+      "summary": "A proof-of-concept agent for ABB RAPID code generation, grounded in manuals through retrieval-augmented generation.",
+      "tags": ["LLM agents", "RAG", "ABB RAPID", "HPC"],
+      "result": "Benchmarked on approximately 50 manufacturing tasks.",
+      "problem": "Generating robot code requires more than translating an instruction into text: the output must follow a specialised language and be evaluated against the intended manufacturing task.",
+      "contribution": "I co-developed a proof-of-concept LLM agent using the OpenAI GPT API and retrieval over parsed ABB manuals. I implemented an HPC-based framework to validate generated code at scale.",
+      "methods": ["Grounded code generation with retrieval-augmented generation over technical manuals.", "Targeted ABB RAPID programs for flexible-manufacturing tasks.", "Analysed system performance and scalability with a benchmark of approximately 50 tasks."],
+      "outcome": "The work established a code-generation and validation workflow. The task count describes benchmark scope; it does not establish a code success rate or certify the safety of generated programs.",
+      "figure_caption": "Conceptual generation and validation workflow. This is a high-level schematic of the thesis project."
+    }
+  ],
+  "education": [
+    {"school": "Institute of Science Tokyo", "degree": "MSc · Chemical Science / Computational Materials", "date": "Oct 2026 – present", "detail": "Tateyama–Ando Lab · Tokyo, Japan"},
+    {"school": "Chalmers University of Technology", "degree": "MSc · Engineering Mathematics and Computational Science", "date": "Aug 2023 – Jun 2026", "detail": "Research exchange at Tohoku University · 2024–2025"},
+    {"school": "Queen Mary University of London", "degree": "BEng · Materials Science and Engineering", "date": "Aug 2019 – Jul 2023", "detail": "Thin-film fabrication and materials characterisation"}
+  ],
+  "publications": [
+    {"title": "Engineered drug delivery nanosystems for tumor microenvironment normalization therapy", "authors": "B. Yang, F. Meng, J. Zhang, K. Chen, S. Meng, K. Cai, Y. Zhao, L. Dai", "venue": "Nano Today 49, 101766", "year": "2023", "doi": "10.1016/j.nantod.2023.101766"},
+    {"title": "Former research and recent advances of metal-organic frameworks (MOF) for anti-cancer drug delivery", "authors": "K. Gu, F. Meng", "venue": "Journal of Physics: Conference Series 2021, 012021", "year": "2021", "doi": "10.1088/1742-6596/2021/1/012021"}
+  ]
+}
