@@ -1,76 +1,110 @@
 #!/usr/bin/env python3
-"""Regenerate the website's public resume. Requires reportlab (optional for site builds)."""
+"""Create the general public CV in the website's Georgia / Arial typography."""
 from pathlib import Path
+from html import escape
 import json
-from xml.sax.saxutils import escape
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak, KeepTogether
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib import colors
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.enums import TA_LEFT
 from reportlab.lib.pagesizes import A4
 
 ROOT = Path(__file__).resolve().parents[1]
-data=json.loads((ROOT/'content.json').read_text())
-INK=colors.HexColor('#20352c')
-GREEN=colors.HexColor('#215f48')
-MUTED=colors.HexColor('#58665d')
-styles={
- 'name':ParagraphStyle('name',fontName='Helvetica-Bold',fontSize=25,leading=29,textColor=INK,spaceAfter=6),
- 'contact':ParagraphStyle('contact',fontName='Helvetica',fontSize=8.5,leading=13,textColor=MUTED),
- 'intro':ParagraphStyle('intro',fontName='Helvetica',fontSize=9.2,leading=13.2,textColor=INK,spaceAfter=11),
- 'section':ParagraphStyle('section',fontName='Helvetica-Bold',fontSize=9,leading=13,textColor=GREEN,spaceBefore=11,spaceAfter=6),
- 'heading':ParagraphStyle('heading',fontName='Helvetica-Bold',fontSize=9.3,leading=12.8,textColor=INK),
- 'date':ParagraphStyle('date',fontName='Helvetica',fontSize=8.2,leading=12.8,textColor=MUTED,alignment=2),
- 'body':ParagraphStyle('body',fontName='Helvetica',fontSize=8.8,leading=12.5,textColor=INK,spaceAfter=5),
- 'bullet':ParagraphStyle('bullet',fontName='Helvetica',fontSize=8.8,leading=12.5,textColor=INK,leftIndent=9,firstLineIndent=-9,spaceAfter=4),
+data = json.loads((ROOT/'content.json').read_text())
+FONTS = Path('/System/Library/Fonts/Supplemental')
+for name,file in [('Body','Arial.ttf'),('BodyBold','Arial Bold.ttf'),('BodyItalic','Arial Italic.ttf'),('Display','Georgia.ttf'),('DisplayItalic','Georgia Italic.ttf')]:
+    pdfmetrics.registerFont(TTFont(name,str(FONTS/file)))
+pdfmetrics.registerFontFamily('Body',normal='Body',bold='BodyBold',italic='BodyItalic',boldItalic='BodyBold')
+INK, GREEN, MUTED = [colors.HexColor(c) for c in ['#20352c','#215f48','#526458']]
+styles = {
+ 'name':ParagraphStyle('name',fontName='Display',fontSize=31,leading=36,textColor=INK,spaceAfter=8),
+ 'subtitle':ParagraphStyle('subtitle',fontName='DisplayItalic',fontSize=13,leading=18,textColor=GREEN,spaceAfter=7),
+ 'contact':ParagraphStyle('contact',fontName='Body',fontSize=9.5,leading=14,textColor=MUTED),
+ 'intro':ParagraphStyle('intro',fontName='Body',fontSize=10.2,leading=14.4,textColor=INK,spaceAfter=8),
+ 'section':ParagraphStyle('section',fontName='Display',fontSize=17,leading=22,textColor=GREEN,spaceBefore=16,spaceAfter=9,keepWithNext=True),
+ 'heading':ParagraphStyle('heading',fontName='BodyBold',fontSize=10.2,leading=14,textColor=INK),
+ 'date':ParagraphStyle('date',fontName='Body',fontSize=9.5,leading=14,textColor=MUTED,alignment=2),
+ 'body':ParagraphStyle('body',fontName='Body',fontSize=10,leading=14,textColor=INK,spaceAfter=6),
+ 'meta':ParagraphStyle('meta',fontName='Body',fontSize=9.5,leading=13.5,textColor=MUTED,spaceAfter=6),
+ 'bullet':ParagraphStyle('bullet',fontName='Body',fontSize=10,leading=14,textColor=INK,leftIndent=11,firstLineIndent=-11,spaceAfter=5),
 }
 story=[]
-def p(text,style='body'):
- return Paragraph(text,styles[style])
-def section(name): story.append(p(name.upper(),'section'))
+def p(text,style='body'): return Paragraph(text,styles[style])
+def section(text): story.append(p(text,'section'))
 def row(label,date):
- t=Table([[p(label,'heading'),p(date,'date')]],colWidths=[368,143])
- t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0),('TOPPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),3)]))
- story.append(t)
+    t=Table([[p(label,'heading'),p(date,'date')]],colWidths=[341,154],hAlign='LEFT')
+    t.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0),('TOPPADDING',(0,0),(-1,-1),0),('BOTTOMPADDING',(0,0),(-1,-1),4)]))
+    story.append(t)
 def bullet(text): story.append(p('• '+text,'bullet'))
 
 story.append(p('Fanze Meng','name'))
-story.append(p('Japan | <link href="mailto:'+data['email']+'">'+data['email']+'</link>','contact'))
-story.append(p('<link href="'+data['github']+'">github.com/DMPoolM</link> | <link href="'+data['linkedin']+'">LinkedIn</link>','contact'))
-story.append(Spacer(1,12))
-story.append(p('Computational materials MSc student with training in materials science and engineering mathematics. Experience in materials property prediction, uncertainty estimation, research software, and generative AI for industrial engineering.','intro'))
+story.append(p('Materials science, engineering mathematics, and computing','subtitle'))
+story.append(p('Japan  |  <link href="mailto:'+data['email']+'">'+data['email']+'</link>','contact'))
+story.append(p('<link href="'+data['url']+'">dmpoolm.github.io</link>  |  <link href="'+data['github']+'">GitHub</link>  |  <link href="'+data['linkedin']+'">LinkedIn</link>','contact'))
+story.append(Spacer(1,13))
+story.append(p('MSc student in computational materials at Institute of Science Tokyo, with degrees in materials science and engineering mathematics. Experience spans generative atomistic modelling, materials machine learning, experimental materials research, and software for industrial R&amp;D.','intro'))
 
 section('Education')
 for e in data['education']:
- row(e['school'],e['date'].replace('–','-'))
- story.append(p(e['degree'].replace('·','|').replace('–','-'),'body'))
+    row(escape(e['school']),e['date'].replace('–','-'))
+    story.append(p(escape(e['degree'].replace('·','|').replace('–','-'))))
+story.append(p('Completed the Chalmers MSc in June 2026; began a second MSc focused on computational materials at Science Tokyo in October 2026.','meta'))
 
-section('Selected research and engineering experience')
+section('Engineering experience')
 row('Volvo Cars | Materials &amp; AI internship','Feb 2025 - Jan 2026')
-bullet('Built CNN-Transformer models to predict stress-strain curves from microstructure images of 90 representative volume elements, reaching validation R<super>2</super> = 0.89; estimated uncertainty with Monte Carlo dropout.')
-bullet('Developed Material Centre, a Streamlit and Plotly application for materials similarity search using PCA and distance metrics; containerised with Docker and deployed for internal user testing.')
-bullet('Developed a physics-informed model variant with elastic-modulus, smoothness, and boundary-condition losses.')
-story.append(Spacer(1,5))
+bullet('Developed and deployed Material Centre, an interactive materials-search application using Streamlit, Plotly, PCA, and distance metrics; containerised with Docker for internal user testing.')
+bullet('Built CNN-Transformer models for stress-strain prediction from microstructure images of 90 representative volume elements; validation R<super>2</super> = 0.89, with Monte Carlo-dropout uncertainty estimates.')
+bullet('Added a physics-informed variant with elastic-modulus, smoothness, and boundary-condition losses.')
+story.append(Spacer(1,6))
+row('EDF, China R&amp;D Center | R&amp;D Assistant','Jun 2024 - Sep 2024')
+story.append(p('Supported research on additive manufacturing for power-plant repair, analysing application cases and co-writing a technology roadmap. Researched HPC requirements for manufacturing, safety, data analysis, and materials R&amp;D.'))
+
+section('Master\u2019s thesis')
+row('Chalmers × Volvo Cars | Generative AI for robotics','Oct 2025 - Jun 2026')
+bullet('Co-developed a proof-of-concept LLM agent using the OpenAI GPT API and retrieval over ABB manuals to generate RAPID robot code.')
+bullet('Implemented an HPC-based code-validation framework; benchmarked the workflow on approximately 50 manufacturing tasks and analysed scalability.')
+
+story.append(PageBreak())
+section('Current research')
+row('Institute of Science Tokyo | Tateyama-Ando Lab','Oct 2026 - present')
+story.append(p('Physics-aware generative models for reconstructing periodic 3D atomic structures from pair distribution functions, targeting solid electrolytes for batteries.'))
+bullet('Implemented structure-to-distribution preprocessing, grouped dataset splits, and data-quality diagnostics.')
+bullet('Implemented conditional flow-matching training and sampling, a diffusion baseline, and structural evaluation with short MLIP relaxation.')
+story.append(p('Current focus: data coverage, local bonding, and comparison with simpler baselines.','meta'))
+
+section('Research and experimental background')
 row('Tohoku University | COLABS research exchange','Sep 2024 - Feb 2025')
-bullet('Built a graph-similarity clustering pipeline for 3D electron diffraction structure candidates, reducing the number requiring manual verification by 97.2% on average across 7 datasets (2,127 structures).')
-bullet('Replicated a catalyst-screening study using pretrained FAIR-Chem GNN models; generated adsorbate-slab configurations, ran ML relaxations, and compared adsorption energies with literature values.')
+bullet('Built a graph-similarity clustering pipeline for 3D electron diffraction candidates, reducing the number requiring manual verification by 97.2% on average across 7 datasets (2,127 structures).')
+bullet('Replicated a catalyst-screening study with pretrained FAIR-Chem GNN models, including adsorbate-slab generation, ML relaxations, and comparison with literature adsorption energies.')
 story.append(Spacer(1,5))
-row('Institute of Science Tokyo | MSc research','Oct 2026 - present')
-bullet('Developing physics-aware generative models to reconstruct 3D atomic structures from pair distribution functions, targeting solid electrolytes for batteries.')
-story.append(Spacer(1,5))
-row('Chalmers × Volvo Cars | MSc thesis','Oct 2025 - Jun 2026')
-bullet('Co-developed an LLM agent with retrieval over ABB manuals to generate RAPID robot code; implemented an HPC-based validation framework and benchmarked on approximately 50 manufacturing tasks.')
+row('Undergraduate laboratory research','2021 - 2023')
+story.append(p('Worked on thin-film fabrication for flexible displays and on aqueous flexible zinc-ion battery materials. Experience includes electrodeposition, electrode-separator fabrication, IR spectroscopy, XRD, SEM, and electrochemical testing.'))
 
-section('Technical skills and languages')
-story.append(p('<b>ML and software:</b> Python, PyTorch, TensorFlow, scikit-learn, XGBoost; CNNs, GNNs, PINNs; uncertainty estimation, LLM agents, RAG; Git, Docker, Azure, Streamlit, Plotly.'))
-story.append(p('<b>Materials:</b> FAIR-Chem, ASE, RDKit; XRD, IR spectroscopy, SEM, electrochemical testing.'))
-story.append(p('<b>Languages:</b> Chinese (native); English (fluent, IELTS 7.5); Japanese (actively studying).'))
+section('Tools and interests')
+story.append(p('<b>Programming and ML:</b> Python, C, MATLAB/Simulink, Julia, SQL; PyTorch, TensorFlow, scikit-learn, XGBoost; generative models, uncertainty estimation, LLM agents, and RAG.'))
+story.append(p('<b>Scientific software:</b> FAIR-Chem, ASE, RDKit; Linux, Git, Docker, Azure, Streamlit, Plotly; parallel computing, image analysis, and control systems.'))
+story.append(p('<b>Languages:</b> Chinese (native), English (fluent; IELTS 7.5), Japanese (actively studying). <b>Personal interests:</b> hiking, cycling, driving.'))
 
-section('Selected publications')
-story.append(p('Second author: <i>Nano Today</i> (2023), doi: <link href="https://doi.org/10.1016/j.nantod.2023.101766">10.1016/j.nantod.2023.101766</link>.'))
-story.append(p('Second author: <i>Journal of Physics: Conference Series</i> (2021), doi: <link href="https://doi.org/10.1088/1742-6596/2021/1/012021">10.1088/1742-6596/2021/1/012021</link>.'))
+section('Publications')
+story.append(p('Collaborative papers from undergraduate study.','meta'))
+for pub in data['publications']:
+    story.append(p(escape(pub['authors'])+'. '+escape(pub['title'])+'. <i>'+escape(pub['venue'])+'</i> ('+pub['year']+'). <link href="https://doi.org/'+pub['doi']+'">doi:'+pub['doi']+'</link>.'))
+
+def page_frame(canvas,doc):
+    w,h=A4
+    canvas.saveState()
+    canvas.setFillColor(colors.HexColor('#215f48'))
+    canvas.rect(0,h-10,w,10,fill=1,stroke=0)
+    canvas.setStrokeColor(colors.HexColor('#cbd8c5'))
+    canvas.line(48,38,w-48,38)
+    canvas.setFillColor(MUTED)
+    canvas.setFont('Body',9.5)
+    canvas.drawString(48,22,'Fanze Meng | dmpoolm.github.io')
+    canvas.drawRightString(w-48,22,f'{doc.page} / 2')
+    canvas.restoreState()
 
 output=ROOT/'assets'/'Fanze_Meng_Resume.pdf'
-doc=SimpleDocTemplate(str(output),pagesize=A4,rightMargin=42,leftMargin=42,topMargin=33,bottomMargin=31,title='Fanze Meng - Resume',author='Fanze Meng')
-doc.build(story)
+doc=SimpleDocTemplate(str(output),pagesize=A4,leftMargin=44,rightMargin=44,topMargin=36,bottomMargin=51,title='Fanze Meng - Curriculum Vitae',author='Fanze Meng')
+doc.build(story,onFirstPage=page_frame,onLaterPages=page_frame)
 print(output)

@@ -5,7 +5,13 @@
   "email": "meng.f.0621@m.isct.ac.jp",
   "url": "https://dmpoolm.github.io",
   "updated": "November 2026",
-  "intro": "I’m an MSc student at Institute of Science Tokyo, working on computational materials in the Tateyama–Ando Lab. My work connects materials science, machine learning, and software for industrial R&D.",
+  "intro": "I’m an MSc student in computational materials at Institute of Science Tokyo’s Tateyama–Ando Lab. With a background in materials science and engineering mathematics, I work across atomistic modelling, machine learning, and software for engineering research.",
+  "interests": ["Hiking", "Cycling", "Driving"],
+  "research": {
+    "summary": "I’m developing physics-aware generative models that reconstruct periodic 3D atomic structures from pair distribution functions, with solid electrolytes for batteries as the target application.",
+    "implemented": ["A structure-to-distribution data pipeline, with grouped dataset splits and data-quality diagnostics.", "Conditional flow-matching training and sampling, together with a diffusion baseline implementation.", "Structural evaluation and short relaxation with a machine-learned interatomic potential."],
+    "focus": "Current focus: improving the data coverage and local bonding of generated structures, and comparing them with simpler baselines. Molecular-dynamics transport validation is a later step."
+  },
   "projects": [
     {
       "slug": "material-centre",
@@ -38,7 +44,7 @@
       "problem": "Microstructure contains information about a material’s mechanical response. This project explored learning a mapping from microstructure images to tensile stress–strain curves, together with an estimate of predictive uncertainty.",
       "contribution": "I designed and developed the prediction models, implemented Monte Carlo dropout for uncertainty estimation, and added a physics-informed model variant.",
       "methods": ["Combined a ResNet-101 backbone, spatial attention, and a Transformer encoder in PyTorch.", "Estimated uncertainty with Monte Carlo dropout.", "Added elastic-modulus, smoothness, and boundary-condition losses in a physics-informed variant."],
-      "outcome": "The model achieved a validation R² of 0.89. This is a validation result rather than a claim of performance on an independent external dataset. The public overview does not include the industrial training data, measured curves, or model weights.",
+      "outcome": "The model achieved a validation R² of 0.89 on the project dataset. Monte Carlo dropout added uncertainty estimates, while the physics-informed variant incorporated elastic-modulus, smoothness, and boundary-condition losses. The reported score refers to the validation split.",
       "figure_caption": "Conceptual model pipeline. The curve is illustrative and does not represent measured data or a model prediction."
     },
     {
@@ -55,7 +61,7 @@
       "problem": "Structure solutions from 3D electron diffraction can produce many related candidates. Inspecting each candidate separately creates substantial manual work.",
       "contribution": "I built a graph-similarity clustering pipeline for structure candidates and evaluated it across seven experimental datasets containing 2,127 structures.",
       "methods": ["Represented candidate structures as graphs and compared structural similarity.", "Grouped related candidates to reduce the number requiring manual verification.", "Also compared Morgan-fingerprint classifiers, including SVM and XGBoost, with a best cross-validated accuracy of 88.7%."],
-      "outcome": "The clustering workflow reduced the number of structures requiring manual verification by 97.2% on average. This measures a reduction in review workload; it is not a structure-identification accuracy or a guarantee that every correct structure is retained.",
+      "outcome": "Across seven experimental datasets, the workflow reduced the number of candidates requiring manual verification by 97.2% on average. Grouping similar candidates produced a smaller review set; the percentage describes workload reduction. A separate fingerprint-classification comparison reached 88.7% cross-validated accuracy.",
       "figure_caption": "Conceptual grouping of related structure candidates. Point counts and positions are schematic, not experimental results."
     },
     {
@@ -68,11 +74,12 @@
       "date": "Oct 2025 – Jun 2026",
       "summary": "A proof-of-concept agent for ABB RAPID code generation, grounded in manuals through retrieval-augmented generation.",
       "tags": ["LLM agents", "RAG", "ABB RAPID", "HPC"],
-      "result": "Benchmarked on approximately 50 manufacturing tasks.",
+      "result": "A working proof of concept linking manual retrieval, RAPID code generation, and an HPC-based validation framework.",
       "problem": "Generating robot code requires more than translating an instruction into text: the output must follow a specialised language and be evaluated against the intended manufacturing task.",
       "contribution": "I co-developed a proof-of-concept LLM agent using the OpenAI GPT API and retrieval over parsed ABB manuals. I implemented an HPC-based framework to validate generated code at scale.",
       "methods": ["Grounded code generation with retrieval-augmented generation over technical manuals.", "Targeted ABB RAPID programs for flexible-manufacturing tasks.", "Analysed system performance and scalability with a benchmark of approximately 50 tasks."],
-      "outcome": "The work established a code-generation and validation workflow. The task count describes benchmark scope; it does not establish a code success rate or certify the safety of generated programs.",
+      "outcome": "The prototype connected document-grounded generation with a repeatable code-validation workflow. Approximately 50 manufacturing tasks provided a common benchmark for analysing system performance and scalability.",
+      "deliverables": ["Retrieval over parsed ABB manuals to provide technical context for code generation.", "A proof-of-concept agent generating ABB RAPID programs from manufacturing tasks.", "An HPC-based code-validation framework and a benchmark of approximately 50 tasks."],
       "figure_caption": "Conceptual generation and validation workflow. This is a high-level schematic of the thesis project."
     }
   ],

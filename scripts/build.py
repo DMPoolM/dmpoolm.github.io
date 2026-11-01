@@ -3,6 +3,7 @@
 from pathlib import Path
 from html import escape as esc
 import json
+import hashlib
 import math
 import random
 import shutil
@@ -17,6 +18,8 @@ for asset in (ROOT / 'assets').iterdir():
         shutil.copyfile(asset, OUT / 'assets' / asset.name)
 
 ARROW = '<span aria-hidden="true">↗</span>'
+ASSET_VERSION = hashlib.sha256(b''.join((ROOT/'assets'/name).read_bytes() for name in ['site.css', 'site.js', 'Fanze_Meng_Resume.pdf'])).hexdigest()[:10]
+CV = f'assets/Fanze_Meng_Resume.pdf?v={ASSET_VERSION}'
 
 
 def tags(items):
@@ -38,21 +41,33 @@ def layout(title, description, body, path='', prefix='./'):
   <meta property="og:title" content="{esc(title, quote=True)}">
   <meta property="og:description" content="{esc(description, quote=True)}">
   <meta property="og:url" content="{canonical}">
+  <meta property="og:site_name" content="Fanze Meng">
+  <meta property="og:image" content="{DATA['url']}/assets/social-preview.png?v={ASSET_VERSION}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Fanze Meng — Materials, mathematics, and computing, with an abstract atomic lattice">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{esc(title, quote=True)}">
+  <meta name="twitter:description" content="{esc(description, quote=True)}">
+  <meta name="twitter:image" content="{DATA['url']}/assets/social-preview.png?v={ASSET_VERSION}">
+  <meta name="twitter:image:alt" content="Fanze Meng — Materials, mathematics, and computing">
   <link rel="icon" href="{prefix}assets/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="{prefix}assets/site.css">
-  <script src="{prefix}assets/site.js" defer></script>
+  <link rel="alternate icon" href="{prefix}favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="stylesheet" href="{prefix}assets/site.css?v={ASSET_VERSION}">
+  <script src="{prefix}assets/site.js?v={ASSET_VERSION}" defer></script>
 </head>
 <body>
 <a class="skip-link" href="#main">Skip to content</a>
 <header class="header wrap">
   <a class="wordmark" href="{prefix}" aria-label="Fanze Meng, home"><span class="monogram" aria-hidden="true">fm<span>.</span></span><span>Fanze Meng</span></a>
   <nav aria-label="Main navigation">
-    <a href="{prefix}#work">Work</a><a href="{prefix}#research">Research</a><a href="{prefix}#about">About</a>
-    <a class="nav-contact" href="{prefix}#contact">Let’s talk {ARROW}</a>
+    <a href="{prefix}#research">Research</a><a href="{prefix}#work">Work</a><a href="{prefix}#about">About</a>
+    <a class="nav-contact" href="{prefix}#contact"><span class="contact-label">Contact</span> {ARROW}</a>
   </nav>
 </header>
 {body}
-<footer class="footer wrap"><a href="{prefix}" class="footer-name">Fanze Meng<span>Materials science × machine learning</span></a><p>© 2026 Fanze Meng · Updated {DATA['updated']}</p><a href="#main">Back to top ↑</a></footer>
+<footer class="footer wrap"><a href="{prefix}" class="footer-name">Fanze Meng<span>Materials · Mathematics · Computing</span></a><p>© 2026 Fanze Meng · Updated {DATA['updated']}</p><a href="#main">Back to top ↑</a></footer>
 </body></html>'''
 
 
@@ -83,7 +98,7 @@ def hero_svg():
         out.append(f'<circle cx="{px}" cy="{py}" r="{13 if active else 9}" fill="url(#{"focus" if active else "atom"})" stroke="#f5faf2" stroke-width="1.5"/>')
     out.append('''<g fill="#335a4d" font-family="Arial,sans-serif" font-size="11" letter-spacing="1.7"><text x="35" y="52">STRUCTURE</text><text x="385" y="442">PROPERTY</text></g>
       <g stroke="#8ca797" fill="none"><path d="M104 61H151L185 100"/><path d="M376 433H341L320 395"/></g>
-      <g fill="#53705f" font-family="monospace" font-size="10"><text x="34" y="483">01 / COMPUTATIONAL MATERIALS</text><text x="433" y="483">E(3)</text></g></svg>''')
+      </svg>''')
     return ''.join(out)
 
 
@@ -136,57 +151,95 @@ def project_svg(slug):
 for project in DATA['projects']:
     (OUT/'assets'/f"{project['slug']}.svg").write_text(project_svg(project['slug']))
 
+# Text labels live in HTML so they remain readable when the diagram reflows.
+pdf_curve = [svg_start('Illustrative pair distribution curves, not experimental data',320,180), '<path d="M25 15V155H305" fill="none" stroke="#58705e" stroke-width="1.5"/>']
+for color,offset in [('#215f48',0),('#778a46',14)]:
+    points=[]
+    for x in range(28,302):
+        r=(x-28)/30
+        y=137-sum(a*math.exp(-((r-m-offset/90)/w)**2) for a,m,w in [(97,1.6,.22),(58,3,.32),(40,4.5,.45),(25,6,.58),(13,7.6,.6)])
+        points.append(f'{x},{y:.2f}')
+    pdf_curve.append(f'<polyline points="{" ".join(points)}" fill="none" stroke="{color}" stroke-width="2"/>')
+pdf_curve.append('</svg>')
+(OUT/'assets'/'research-input.svg').write_text(''.join(pdf_curve))
+rng=random.Random(19)
+coords=[(rng.uniform(45,270),rng.uniform(25,150)) for _ in range(22)]
+structure=[svg_start('Illustrative atomistic structure candidate with periodic cell outline',320,180),'<path d="M40 55L215 22L282 66V135L108 164L40 120ZM40 55L108 95L282 66M108 95V164" stroke="#8a9f8c" fill="none"/>']
+for i,(x,y) in enumerate(coords):
+    for qx,qy in coords[i+1:]:
+        d=math.hypot(qx-x,qy-y)
+        if 25<d<48: structure.append(f'<path d="M{x:.1f} {y:.1f}L{qx:.1f} {qy:.1f}" stroke="#9caf9b"/>')
+for i,(x,y) in enumerate(coords):
+    structure.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{6 if i%3 else 8}" fill="{["#215f48","#9aaf77","#c1c8ac"][i%3]}" stroke="#fafaf7"/>')
+structure.append('</svg>')
+(OUT/'assets'/'research-output.svg').write_text(''.join(structure))
+shutil.copyfile(ROOT/'assets'/'favicon.ico',OUT/'favicon.ico')
+
 cards = []
-for p in DATA['projects'][:3]:
+for p in DATA['projects']:
     cards.append(f'''<article class="project-card">
-      <a class="project-image" href="./projects/{p['slug']}/" aria-label="Read case study: {esc(p['title'])}"><img src="./assets/{p['slug']}.svg" alt="Conceptual diagram of {esc(p['title'], quote=True)}" width="640" height="360" loading="lazy"><span class="image-index">{p['number']} / SELECTED WORK</span><span class="image-link" aria-hidden="true">↗</span></a>
+      <a class="project-image" href="./projects/{p['slug']}/" aria-label="Read case study: {esc(p['title'])}"><img src="./assets/{p['slug']}.svg" alt="Conceptual diagram of {esc(p['title'], quote=True)}" width="640" height="360"><span class="image-index">Case {p['number']}</span><span class="image-link" aria-hidden="true">↗</span></a>
       <p class="eyebrow project-category">{esc(p['category'])}</p><h3><a href="./projects/{p['slug']}/">{esc(p['title'])}</a></h3><p class="card-summary">{esc(p['summary'])}</p>
       {tags(p['tags'][:3])}<a class="text-link" href="./projects/{p['slug']}/">Read case study <span aria-hidden="true">↗</span></a>
     </article>''')
 
 education=''.join(f'''<li><p class="education-date">{esc(e['date'])}</p><h3>{esc(e['school'])}</h3><p>{esc(e['degree'])}</p><p class="muted">{esc(e['detail'])}</p></li>''' for e in DATA['education'])
 publications=''.join(f'''<li><span class="publication-year">{p['year']}</span><div><h3><a href="https://doi.org/{p['doi']}">{esc(p['title'])} {ARROW}</a></h3><p>{esc(p['authors'])}</p><p class="muted">{esc(p['venue'])}</p></div></li>''' for p in DATA['publications'])
+research_progress=''.join(f'<li>{esc(item)}</li>' for item in DATA['research']['implemented'])
+interests=''.join(f'<li>{esc(item)}</li>' for item in DATA['interests'])
 body=f'''
 <main id="main">
 <section class="hero wrap" aria-labelledby="intro-title">
-  <div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span> Computational materials · Japan</p>
-    <h1 id="intro-title">Machine learning<br>for <em>materials</em><br>and engineering.</h1>
+  <div class="hero-copy"><p class="eyebrow"><span class="status-dot"></span> Materials · Mathematics · Computing</p>
+    <h1 id="intro-title">Fanze Meng<span>.</span></h1>
+    <p class="hero-statement">Materials, models,<br>and things I <em>build.</em></p>
     <p class="hero-intro">{esc(DATA['intro'])}</p>
-    <div class="actions"><a class="button" href="#work">Explore my work <span aria-hidden="true">↓</span></a><a class="button button-light" href="./assets/Fanze_Meng_Resume.pdf" download>Download résumé <span class="pdf-label">PDF ↗</span></a></div>
+    <div class="actions"><a class="button" href="#research">Explore my research <span aria-hidden="true">↓</span></a><a class="button button-light" href="./{CV}" download="Fanze_Meng_CV.pdf">Download CV <span class="pdf-label">PDF ↗</span></a></div>
     <div class="hero-social"><a href="{DATA['github']}">GitHub {ARROW}</a><a href="{DATA['linkedin']}">LinkedIn {ARROW}</a><a href="mailto:{DATA['email']}">Email {ARROW}</a></div>
   </div>
   <figure class="hero-figure"><img src="./assets/lattice.svg" alt="Abstract lattice of connected atoms, representing computational materials" width="560" height="520"><figcaption><span>From structure to understanding.</span><span>Illustrative lattice</span></figcaption></figure>
 </section>
 <div class="affiliations wrap"><p>Research &amp;<br>engineering experience</p><ul><li>Science Tokyo</li><li>Volvo Cars</li><li>Chalmers</li><li>Tohoku University</li></ul></div>
 
-<section class="section wrap" id="work" aria-labelledby="work-title">
-  <div class="section-heading"><div><p class="eyebrow">01 / Selected work</p><h2 id="work-title">Ideas, models, and useful tools.</h2></div><p>Selected work across materials informatics,<br>scientific computing, and industrial R&amp;D.</p></div>
-  <div class="project-grid">{''.join(cards)}</div>
-  <a class="additional-project" href="./projects/robot-code-agent/"><span class="mini-number">04</span><span><span class="eyebrow">MSc thesis · Chalmers × Volvo Cars</span><strong>An LLM agent for industrial robot code</strong></span><span class="additional-project-end">Explore project {ARROW}</span></a>
-</section>
-
 <section class="research-band" id="research" aria-labelledby="research-title"><div class="wrap research-grid">
-  <div><p class="eyebrow">02 / Current research</p><h2 id="research-title">From pair distributions<br>to atomic structures.</h2><span class="research-status"><span class="status-dot"></span> In progress · Since October 2026</span></div>
-  <div><p class="research-intro">I’m developing physics-aware generative models to reconstruct 3D atomic structures from pair distribution functions, with solid electrolytes for batteries as the target application.</p><p>The planned approach uses conditional flow matching and physical constraints, with validation through machine-learned interatomic potentials and molecular dynamics. This is ongoing MSc research; completed benchmark results are not yet presented here.</p><p class="lab-note">Tateyama–Ando Lab<br>Institute of Science Tokyo</p></div>
+  <div><p class="eyebrow">Current research</p><h2 id="research-title">From pair distributions<br>to atomic structures.</h2><span class="research-status"><span class="status-dot"></span> MSc research · In progress since October 2026</span><p class="research-intro">{esc(DATA['research']['summary'])}</p><p class="lab-note">Tateyama–Ando Lab<br>Institute of Science Tokyo</p></div>
+  <div class="research-progress"><h3>Implemented so far</h3><ul>{research_progress}</ul><p>{esc(DATA['research']['focus'])}</p></div>
+  <figure class="research-figure"><div class="research-flow">
+    <div class="flow-step"><p class="eyebrow">Pair distribution input</p><img src="./assets/research-input.svg" width="320" height="180" alt="Schematic total and partial pair distribution curves"><p>Local distances, encoded as distributions</p></div>
+    <div class="flow-step flow-model"><span class="flow-arrow" aria-hidden="true">→</span><strong>Conditional <br>flow matching</strong><p>Composition + physical constraints</p><span class="flow-arrow" aria-hidden="true">→</span></div>
+    <div class="flow-step"><p class="eyebrow">3D structure candidates</p><img src="./assets/research-output.svg" width="320" height="180" alt="Schematic periodic atomistic structure candidate"><p>Generate, screen, and evaluate</p></div>
+  </div><figcaption>PDF means pair distribution function here. This is a conceptual workflow; the curves and structure are illustrative.</figcaption></figure>
 </div></section>
 
-<section class="section wrap publications" aria-labelledby="publications-title"><div class="section-heading"><div><p class="eyebrow">03 / Publications</p><h2 id="publications-title">Earlier work in materials &amp; chemistry.</h2></div><p>Co-authored publications.</p></div><ol class="publication-list">{publications}</ol></section>
+<section class="section wrap" id="work" aria-labelledby="work-title">
+  <div class="section-heading"><div><p class="eyebrow">Selected work</p><h2 id="work-title">From research questions<br>to working systems.</h2></div><p>Materials modelling, research software,<br>structure analysis, and generative AI.</p></div>
+  <div class="project-grid">{''.join(cards)}</div>
+  <div class="wider-work"><p class="eyebrow">More of my background</p><div class="wider-grid">
+    <article><h3>Materials in the lab</h3><p>Thin-film fabrication for flexible displays, plus electrode fabrication and characterisation for aqueous zinc-ion batteries.</p><span>Undergraduate laboratory research</span></article>
+    <article><h3>Energy &amp; manufacturing</h3><p>At EDF’s China R&amp;D Center, I supported research on additive manufacturing for power-plant repair and high-performance computing needs.</p><span>R&amp;D Assistant · June–September 2024</span></article>
+    <article><h3>Scientific computing</h3><p>Course projects in parallel C and GPU computing, statistical learning, image analysis, and linear control systems.</p><span>Engineering mathematics · Chalmers</span></article>
+  </div></div>
+</section>
 
-<section class="section wrap about-grid" id="about" aria-labelledby="about-title"><div><p class="eyebrow">04 / A little background</p><h2 id="about-title">Materials foundations.<br>Computational perspective.</h2><p class="about-intro">My background spans materials science in London, engineering mathematics in Gothenburg, and computational materials research in Japan.</p><p>I’m interested in models that respect physical behaviour, uncertainty that helps guide decisions, and research software that people can use. Alongside modelling, I have hands-on experience in thin-film fabrication, battery materials, and materials characterisation.</p><a class="text-link" href="./assets/Fanze_Meng_Resume.pdf">View my résumé (PDF) {ARROW}</a></div><ol class="education-list">{education}</ol></section>
+<section class="about-band"><div class="section wrap about-grid" id="about" aria-labelledby="about-title"><div><p class="eyebrow">About me</p><h2 id="about-title">A path through materials,<br>mathematics, and engineering.</h2><p class="about-intro">My background spans materials science in London, engineering mathematics in Gothenburg, and computational research in Sendai and Tokyo.</p><p>After completing my MSc in Engineering Mathematics and Computational Science at Chalmers in June 2026, I began a second MSc at Institute of Science Tokyo in October, focused on computational materials.</p><p>I bring together experience in experimental materials work, machine-learning models, and software for industrial R&amp;D. The common thread is turning a scientific question into something I can build, test, and understand.</p><a class="text-link" href="./{CV}">Read my CV (PDF) {ARROW}</a><div class="beyond-work"><h3>Beyond work</h3><p>Away from research, my interests include hiking, cycling, and driving.</p><ul aria-label="Personal interests">{interests}</ul></div></div><ol class="education-list">{education}</ol></div></section>
 
-<section class="contact-band" id="contact" aria-labelledby="contact-title"><div class="wrap contact-grid"><div><p class="eyebrow">05 / Get in touch</p><h2 id="contact-title">Let’s connect.</h2><p>For research conversations, collaborations,<br>or opportunities in materials and machine learning.</p></div><div class="contact-links"><a class="email-link" href="mailto:{DATA['email']}">{DATA['email']} {ARROW}</a><div><a href="{DATA['github']}">GitHub {ARROW}</a><a href="{DATA['linkedin']}">LinkedIn {ARROW}</a></div><span>Based in Japan · Chinese / English / Learning Japanese</span></div></div></section>
+<section class="section wrap publications" aria-labelledby="publications-title"><div class="section-heading"><div><p class="eyebrow">Publications</p><h2 id="publications-title">Earlier work in materials<br>&amp; chemistry.</h2></div><p>Collaborative papers from my undergraduate years.</p></div><ol class="publication-list">{publications}</ol></section>
+
+<section class="contact-band" id="contact" aria-labelledby="contact-title"><div class="wrap contact-grid"><div><p class="eyebrow">Get in touch</p><h2 id="contact-title">Let’s connect.</h2><p>For a research conversation, a collaboration,<br>an engineering opportunity, or just to say hello.</p></div><div class="contact-links"><a class="email-link" href="mailto:{DATA['email']}">{DATA['email']} {ARROW}</a><div><a href="{DATA['github']}">GitHub {ARROW}</a><a href="{DATA['linkedin']}">LinkedIn {ARROW}</a></div><span>Based in Japan · Chinese / English / Learning Japanese</span></div></div></section>
 </main>'''
-(OUT/'index.html').write_text(layout('Fanze Meng — Materials Science & Machine Learning', 'Computational materials MSc student at Institute of Science Tokyo. Selected work in materials machine learning, scientific software, and generative AI.', body))
+(OUT/'index.html').write_text(layout('Fanze Meng — Materials, Mathematics & Computing', 'Research, engineering projects, and a little about me. Computational materials at Institute of Science Tokyo; a background in materials science and engineering mathematics.', body))
 
 for i,p in enumerate(DATA['projects']):
     next_p=DATA['projects'][(i+1)%len(DATA['projects'])]
     methods=''.join(f'<li>{esc(m)}</li>' for m in p['methods'])
+    deliverables=('<section><h2>What we built</h2><ul>'+''.join(f'<li>{esc(item)}</li>' for item in p['deliverables'])+'</ul></section>') if p.get('deliverables') else ''
+    method_section=deliverables or f'<section><h2>Methods &amp; implementation</h2><ul>{methods}</ul></section>'
     detail=f'''<main id="main" class="case-main wrap"><a class="back-link" href="../../#work">← Selected work</a>
     <header class="case-header"><p class="eyebrow">Case study {p['number']} / {esc(p['category'])}</p><h1>{esc(p['title'])}</h1><p class="case-subtitle">{esc(p['subtitle'])}</p>
     <dl class="case-meta"><div><dt>Context</dt><dd>{esc(p['context'])}</dd></div><div><dt>Period</dt><dd>{esc(p['date'])}</dd></div></dl>{tags(p['tags'])}</header>
     <figure class="case-figure"><img src="../../assets/{p['slug']}.svg" width="640" height="360" alt="Conceptual workflow diagram"><figcaption>{esc(p['figure_caption'])}</figcaption></figure>
     <div class="case-grid"><aside class="case-highlight"><p class="eyebrow">Project outcome</p><p>{esc(p['result'])}</p></aside>
-    <div class="case-copy"><section><h2>The problem</h2><p>{esc(p['problem'])}</p></section><section><h2>My contribution</h2><p>{esc(p['contribution'])}</p></section><section><h2>Methods &amp; implementation</h2><ul>{methods}</ul></section><section><h2>Outcome &amp; scope</h2><p>{esc(p['outcome'])}</p></section></div></div>
+    <div class="case-copy"><section><h2>The problem</h2><p>{esc(p['problem'])}</p></section><section><h2>My contribution</h2><p>{esc(p['contribution'])}</p></section>{method_section}<section><h2>Outcome</h2><p>{esc(p['outcome'])}</p></section></div></div>
     <div class="case-next"><a href="../../#work">← All selected work</a><a href="../{next_p['slug']}/">Next: {esc(next_p['title'])} →</a></div></main>'''
     folder=OUT/'projects'/p['slug']
     folder.mkdir(parents=True,exist_ok=True)

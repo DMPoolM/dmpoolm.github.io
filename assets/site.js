@@ -1,7 +1,7 @@
 // Navigation remains fully functional without JavaScript.
 // Mark the current section for assistive technology as the reader scrolls.
 const sectionLinks = [...document.querySelectorAll('nav a')];
-const sections = [...document.querySelectorAll('main > section[id]')];
+const sections = [...document.querySelectorAll('main section[id]')];
 if ('IntersectionObserver' in window && sections.length) {
   const observer = new IntersectionObserver(entries => {
     const current = entries.find(entry => entry.isIntersecting);
